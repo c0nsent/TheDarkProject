@@ -1,10 +1,14 @@
+#! [cfg_attr(not(debug_assertions), windows_subsystem = "linux")]
+
 use beryllium::*;
-use beryllium::video::GlSwapInterval;
-use beryllium::video::GlSwapInterval::Vsync;
 use ogl33::*;
 
-const WINDOW_TITLE: &str = "The Dark Project";
 
+type Vertex = [f32; 3];
+
+const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]];
+
+///TODO: Вынеси в отдельные файлы
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
     layout (location = 0) in vec3 pos;
@@ -24,6 +28,53 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
     }
 "#;
 
+enum ShaderType {
+    VertexShader,
+    FragmentShader,
+}
+
+fn create_shader(shader_type: ShaderType, source: &str) -> Result<GLuint, String> {
+    unsafe {
+        let shader = glCreateShader(
+            match shader_type {
+                ShaderType::VertexShader => GL_VERTEX_SHADER,
+                ShaderType::FragmentShader => GL_FRAGMENT_SHADER,
+            }
+        );
+
+        if shader == 0 {
+            return Err("Failed to create a shader".to_string());
+        }
+
+        glShaderSource(
+            shader,
+            1,
+            &(source.as_bytes().as_ptr().cast()),
+            &(source.len().try_into().unwrap())
+        );
+
+        glCompileShader(shader);
+
+        let mut success = 0;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &mut success);
+
+        if success == 0 {
+            let mut v: Vec<u8> = Vec::with_capacity(1024);
+            let mut log_len = 0;
+            glGetShaderInfoLog(
+                shader,
+                1024,
+                &mut log_len,
+                v.as_mut_ptr().cast(),
+            );
+
+            return Err(String::from_utf8_lossy(&v).into_owned());
+        }
+
+        Ok(shader)
+    }
+}
+
 fn main() {
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
 
@@ -31,42 +82,31 @@ fn main() {
     sdl.set_gl_context_minor_version(3).unwrap();
     sdl.set_gl_profile(video::GlProfile::Core).unwrap();
 
-    #[cfg(target_os = "macos")] {
-        sdl.set_gl_context_flags(video::GlContextFlags::FORWARD_COMPATIBLE).unwrap();
-    }
-
-    let win_args = video::CreateWinArgs {
-        title: WINDOW_TITLE,
-        width: 800,
-        height: 600,
-        allow_high_dpi: true,
-        borderless: false,
-        resizable: false,
-    };
-
-    let win = sdl.create_gl_window(win_args).expect("Failed to create a window");
+    let win = sdl
+        .create_gl_window(video::CreateWinArgs {
+            title: "The Dark Project",
+            width: 800,
+            height: 600,
+            allow_high_dpi: true,
+            borderless: false,
+            resizable: false,
+        })
+        .expect("Failed to create a window: ");
 
     unsafe {
         load_gl_with(|f_name| win.get_proc_address(f_name.cast()));
-    }
 
-    unsafe {
+        glClearColor(0.2, 0.3, 0.3, 1.0);
+
         let mut vao = 0;
         glGenVertexArrays(1, &mut vao);
         assert_ne!(vao, 0);
-    }
+        glBindVertexArray(vao);
 
-    unsafe {
         let mut vbo = 0;
         glGenBuffers(1, &mut vbo);
         assert_ne!(vbo, 0);
-
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-        type Vertex = [f32; 3];
-
-        const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]];
-
         glBufferData(
             GL_ARRAY_BUFFER,
             size_of_val(&VERTICES) as isize,
@@ -84,68 +124,21 @@ fn main() {
         );
         glEnableVertexAttribArray(0);
 
-        let vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        assert_ne!(vertex_shader, 0, "Failed to create a vertex shader");
+        let vertex_shader =
+            create_shader(ShaderType::VertexShader, VERTEX_SHADER_SOURCE)
+            .expect("Failed to initialize vertex shader: ");
 
-        glShaderSource(
-            vertex_shader,
-            1,
-            &(VERTEX_SHADER_SOURCE.as_bytes().as_ptr().cast()),
-            &(VERTEX_SHADER_SOURCE.len().try_into().unwrap())
-        );
-
-        glCompileShader(vertex_shader);
-
-        let mut success = 0;
-        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &mut success);
-
-        if success == 0 {
-            let mut v: Vec<u8> = Vec::with_capacity(1024);
-            let mut log_len = 0_i32;
-            glGetShaderInfoLog(
-                vertex_shader,
-                1024,
-                &mut log_len,
-                v.as_mut_ptr().cast(),
-            );
-
-            v.set_len(log_len.try_into().unwrap());
-            panic!("Vertex Compile Error: {}", String::from_utf8_lossy(&v));
-        }
-
-        let fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        assert_ne!(fragment_shader, 0);
-
-        glShaderSource(
-            fragment_shader,
-            1,
-            &(FRAGMENT_SHADER_SOURCE.as_bytes().as_ptr().cast()),
-            &(FRAGMENT_SHADER_SOURCE.len().try_into().unwrap()),
-        );
-
-        glCompileShader(fragment_shader);
-
-        let mut success = 0;
-        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &mut success);
-        if success == 0 {
-            let mut v: Vec<u8> = Vec::with_capacity(1024);
-            let mut log_len = 0_i32;
-
-            glGetShaderInfoLog(
-                fragment_shader,
-                1024,
-                &mut log_len,
-                v.as_mut_ptr().cast(),
-            );
-            v.set_len(log_len.try_into().unwrap());
-            panic!("Fragment Compile Error: {}", String::from_utf8_lossy(&v));
-        }
+        let fragment_shader =
+            create_shader(ShaderType::FragmentShader, FRAGMENT_SHADER_SOURCE)
+            .expect("Failed to initialize fragment shader: ");
 
         let shader_program = glCreateProgram();
+        assert_ne!(shader_program, 0);
         glAttachShader(shader_program, vertex_shader);
         glAttachShader(shader_program, fragment_shader);
         glLinkProgram(shader_program);
 
+        let mut success = 0;
         glGetProgramiv(shader_program, GL_LINK_STATUS, &mut success);
         if success == 0 {
             let mut v: Vec<u8> = Vec::with_capacity(1024);
@@ -162,9 +155,11 @@ fn main() {
 
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
+
+        glUseProgram(shader_program);
     }
 
-    win.set_swap_interval(Vsync).expect("");
+    win.set_swap_interval(video::GlSwapInterval::Vsync).expect("");
 
     'main_loop: loop {
         while let Some(event) = sdl.poll_events() {
