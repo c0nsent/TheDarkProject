@@ -1,11 +1,11 @@
-#! [cfg_attr(not(debug_assertions), windows_subsystem = "linux")]
+    #! [cfg_attr(not(debug_assertions), windows_subsystem = "linux")]
+mod glow;
 
 use beryllium::*;
 use ogl33::*;
 use std::{fs};
 
-
-type Vertex = [f32; 3];
+    type Vertex = [f32; 3];
 
 const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]];
 
@@ -157,7 +157,11 @@ fn main() -> () {
         }
 
         unsafe {
-            glClearColor(0.2, 0.3, 0.3, 1.0);
+
+            let color = create_color();
+
+            glow::clear_color();
+
             glClear(GL_COLOR_BUFFER_BIT);
 
             glDrawArrays(GL_TRIANGLES, 0,3);
