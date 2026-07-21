@@ -2,31 +2,12 @@
 
 use beryllium::*;
 use ogl33::*;
+use std::{fs};
 
 
 type Vertex = [f32; 3];
 
 const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]];
-
-///TODO: Вынеси в отдельные файлы
-const VERTEX_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    layout (location = 0) in vec3 pos;
-
-    void main() {
-        gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
-    }
-"#;
-
-const FRAGMENT_SHADER_SOURCE: &str = r#"
-    #version 330 core
-
-    out vec4 final_color;
-
-    void main() {
-        final_color = vec4(1.0, 0.5, 0.2, 1.0);
-    }
-"#;
 
 enum ShaderType {
     VertexShader,
@@ -75,7 +56,7 @@ fn create_shader(shader_type: ShaderType, source: &str) -> Result<GLuint, String
     }
 }
 
-fn main() {
+fn main() -> () {
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
 
     sdl.set_gl_context_major_version(3).unwrap();
@@ -124,12 +105,18 @@ fn main() {
         );
         glEnableVertexAttribArray(0);
 
+        let vertex_shader_source= fs::read_to_string("src/shaders/shader.vert")
+            .expect("Failed to read a shader file ");
+
         let vertex_shader =
-            create_shader(ShaderType::VertexShader, VERTEX_SHADER_SOURCE)
+            create_shader(ShaderType::VertexShader, &*vertex_shader_source)
             .expect("Failed to initialize vertex shader: ");
 
+        let fragment_shader_source = fs::read_to_string("src/shaders/shader.frag")
+            .unwrap();
+
         let fragment_shader =
-            create_shader(ShaderType::FragmentShader, FRAGMENT_SHADER_SOURCE)
+            create_shader(ShaderType::FragmentShader, &*fragment_shader_source)
             .expect("Failed to initialize fragment shader: ");
 
         let shader_program = glCreateProgram();
@@ -159,7 +146,7 @@ fn main() {
         glUseProgram(shader_program);
     }
 
-    win.set_swap_interval(video::GlSwapInterval::Vsync).expect("");
+    win.set_swap_interval(video::GlSwapInterval::Vsync).unwrap();
 
     'main_loop: loop {
         while let Some(event) = sdl.poll_events() {

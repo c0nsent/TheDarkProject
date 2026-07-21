@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bytemuck = "1"
+bytemuck = "1.25.2"
 ogl33 = { version = "0.2", features = ["debug_error_checks"]}
 ultraviolet = "0.10.0"
 
