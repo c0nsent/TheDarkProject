@@ -11,12 +11,9 @@ type TriIndices = [u32; 3];
 const VERTICES: [Vertex; 4] =
     [[0.5, 0.5, 0.0], [0.5, -0.5, 0.0], [-0.5, -0.5, 0.0], [-0.5, 0.5, 0.0]];
 
-const INDICES: [TriIndices; 2] = [[0, 1, 3], [1, 2, 3]];
 
 fn main() -> () {
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
-
-
 
     sdl.set_gl_context_major_version(3).unwrap();
     sdl.set_gl_context_minor_version(3).unwrap();
@@ -56,13 +53,6 @@ fn main() -> () {
         glEnableVertexAttribArray(0);
     }
 
-    let ebo = glow::Buffer::new().expect("Couldn't make the element buffer.");
-    ebo.bind(glow::BufferType::ElementArray);
-    glow::Buffer::buffer_data(
-        glow::BufferType::ElementArray,
-        bytemuck::cast_slice(&INDICES),
-        GL_STATIC_DRAW
-    );
 
     let vertex_shader_source= fs::read_to_string("shaders/shader.vert")
         .expect("Failed to read a shader file ");
@@ -76,10 +66,6 @@ fn main() -> () {
     shader_program.use_program();
 
     win.set_swap_interval(video::GlSwapInterval::Vsync).unwrap();
-
-    glow::polygon_mode(glow::PolygonMode::Line);
-
-    //let egui_ctx = egui::Context::default();
 
     'main_loop: loop {
         while let Some(event) = sdl.poll_events() {
@@ -103,10 +89,7 @@ fn main() -> () {
             ui.label("test");
         });*/
 
-        unsafe {
-            //glDrawArrays(GL_TRIANGLES, 0, 3);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 as *const _);
-        }
+        glow::draw_arrays(glow::DrawMode::Triangles, 0, VERTICES.len().cast_signed());
 
         win.swap_window();
     }

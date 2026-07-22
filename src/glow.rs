@@ -263,3 +263,22 @@ pub enum PolygonMode {
 pub fn polygon_mode(mode: PolygonMode) {
     unsafe { glPolygonMode(GL_FRONT_AND_BACK, mode as GLenum) };
 }
+
+pub enum DrawMode{
+    Points = GL_POINTS as isize,
+    LineStrip = GL_LINE_STRIP as isize,
+    LineLoop = GL_LINE_LOOP as isize,
+    Lines = GL_LINES as isize,
+    LineStripAdjacency = GL_LINE_STRIP_ADJACENCY as isize,
+    LinesAdjacency = GL_LINES_ADJACENCY as isize,
+    TriangleStrip = GL_TRIANGLE_STRIP as isize,
+    TriangleFan = GL_TRIANGLE_FAN as isize,
+    TriangleStripAdjacency = GL_TRIANGLE_STRIP_ADJACENCY as isize,
+    TrianglesAdjacency = GL_TRIANGLES_ADJACENCY as isize,
+    Triangles = GL_TRIANGLES as isize,
+    //Patch загугли про GL_PATCHES
+}
+
+pub fn draw_arrays(mode: DrawMode, first: i32, count: isize) -> () {
+    unsafe { glDrawArrays(mode as GLenum, first, count as GLsizei) }
+}
