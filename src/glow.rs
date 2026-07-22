@@ -44,6 +44,7 @@ pub enum BufferType {
     Array = GL_ARRAY_BUFFER as isize,
     ElementArray = GL_ELEMENT_ARRAY_BUFFER as isize,
 }
+
 pub struct Buffer(pub GLuint);
 impl Buffer {
     pub fn new() -> Option<Self> {
@@ -237,4 +238,28 @@ impl ShaderProgram {
             Err(out)
         }
     }
+}
+
+
+pub enum ClearBufferBit {
+    ColorBuffer = GL_COLOR_BUFFER_BIT as isize,
+    DepthBuffer = GL_DEPTH_BUFFER_BIT as isize,
+    StencilBuffer = GL_STENCIL_BUFFER_BIT as isize,
+}
+
+
+pub fn clear(clear_buffers: isize) -> () {
+    unsafe { glClear(clear_buffers as GLbitfield) }
+}
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PolygonMode {
+    Point = GL_POINT as isize,
+    Line = GL_LINE as isize,
+    Fill = GL_FILL as isize,
+}
+
+pub fn polygon_mode(mode: PolygonMode) {
+    unsafe { glPolygonMode(GL_FRONT_AND_BACK, mode as GLenum) };
 }

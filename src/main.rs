@@ -4,17 +4,19 @@ pub mod glow;
 use beryllium::*;
 use ogl33::*;
 use std::{fs};
-use crate::glow::*;
-
 
 type Vertex = [f32; 3];
+type TriIndices = [u32; 3];
 
-const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]];
+const VERTICES: [Vertex; 4] =
+    [[0.5, 0.5, 0.0], [0.5, -0.5, 0.0], [-0.5, -0.5, 0.0], [-0.5, 0.5, 0.0]];
 
-
+const INDICES: [TriIndices; 2] = [[0, 1, 3], [1, 2, 3]];
 
 fn main() -> () {
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
+
+
 
     sdl.set_gl_context_major_version(3).unwrap();
     sdl.set_gl_context_minor_version(3).unwrap();
@@ -35,12 +37,12 @@ fn main() -> () {
         load_gl_with(|f_name| win.get_proc_address(f_name.cast()));
     }
 
-    let vao = VertexArray::new().unwrap();
+    let vao = glow::VertexArray::new().unwrap();
     vao.bind();
 
-    let vbo = Buffer::new().unwrap();
-    vbo.bind(BufferType::Array);
-    Buffer::buffer_data(BufferType::Array, bytemuck::cast_slice(&VERTICES) , GL_STATIC_DRAW);
+    let vbo = glow::Buffer::new().unwrap();
+    vbo.bind(glow::BufferType::Array);
+    glow::Buffer::buffer_data(glow::BufferType::Array, bytemuck::cast_slice(&VERTICES) , GL_STATIC_DRAW);
 
     unsafe {
         glVertexAttribPointer(
@@ -53,19 +55,31 @@ fn main() -> () {
         );
         glEnableVertexAttribArray(0);
     }
-    
-    let vertex_shader_source= fs::read_to_string("src/shaders/shader.vert")
+
+    let ebo = glow::Buffer::new().expect("Couldn't make the element buffer.");
+    ebo.bind(glow::BufferType::ElementArray);
+    glow::Buffer::buffer_data(
+        glow::BufferType::ElementArray,
+        bytemuck::cast_slice(&INDICES),
+        GL_STATIC_DRAW
+    );
+
+    let vertex_shader_source= fs::read_to_string("shaders/shader.vert")
         .expect("Failed to read a shader file ");
 
-    let fragment_shader_source = fs::read_to_string("src/shaders/shader.frag")
+    let fragment_shader_source = fs::read_to_string("shaders/shader.frag")
         .unwrap();
 
     let shader_program =
-        ShaderProgram::from_vert_frag(&vertex_shader_source, &fragment_shader_source).unwrap();
+        glow::ShaderProgram::from_vert_frag(&vertex_shader_source, &fragment_shader_source).unwrap();
 
     shader_program.use_program();
 
     win.set_swap_interval(video::GlSwapInterval::Vsync).unwrap();
+
+    glow::polygon_mode(glow::PolygonMode::Line);
+
+    //let egui_ctx = egui::Context::default();
 
     'main_loop: loop {
         while let Some(event) = sdl.poll_events() {
@@ -75,11 +89,23 @@ fn main() -> () {
             }
         }
 
-        clear_color(Color::new(0.2, 0.3, 0.3, 1.0));
+        glow::clear_color(glow::Color::new(0.2, 0.3, 0.3, 1.0));
+
+        glow::clear(glow::ClearBufferBit::ColorBuffer as isize);
+
+/*        let raw_input = egui::RawInput::default();
+        let _full_output = egui_ctx.run(raw_input, |ctx| {
+            egui::Window::new("Test").show(ctx, |ui| {
+                ui.label("test");
+            });
+        } );
+        egui::Window::new("Test").show(&egui_ctx, |ui| {
+            ui.label("test");
+        });*/
 
         unsafe {
-            glClear(GL_COLOR_BUFFER_BIT);
-            glDrawArrays(GL_TRIANGLES, 0,3);
+            //glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 as *const _);
         }
 
         win.swap_window();
