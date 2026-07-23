@@ -5,11 +5,22 @@ use beryllium::*;
 use ogl33::*;
 use std::{fs};
 
-type Vertex = [f32; 3];
-type TriIndices = [u32; 3];
+type Vertex2D = [f32; 2];
 
-const VERTICES: [Vertex; 4] =
-    [[0.5, 0.5, 0.0], [0.5, -0.5, 0.0], [-0.5, -0.5, 0.0], [-0.5, 0.5, 0.0]];
+fn foo(vertices: &[Vertex2D]  ) -> Vec<f32> {
+
+    let mut result = Vec::with_capacity(vertices.len() * 3);
+
+    for v in vertices {
+        result.extend(&[v[0], v[1], 0.0]);
+    }
+
+    result
+}
+
+const VERTICES: &[Vertex] = &[[-0.5, -0.5, 0.0], [0.0, 0.5, 0.0], [0.5, -0.5, 0.0], [0.5, 0.5, 0.0], [0.5, 0.0, 0.0], [-0.5, 0.5, 0.0]];
+
+
 
 
 fn main() -> () {
