@@ -5,20 +5,9 @@ use beryllium::*;
 use ogl33::*;
 use std::{fs};
 
-type Vertex2D = [f32; 2];
 
-fn foo(vertices: &[Vertex2D]  ) -> Vec<f32> {
-
-    let mut result = Vec::with_capacity(vertices.len() * 3);
-
-    for v in vertices {
-        result.extend(&[v[0], v[1], 0.0]);
-    }
-
-    result
-}
-
-const VERTICES: &[Vertex] = &[[-0.5, -0.5, 0.0], [0.0, 0.5, 0.0], [0.5, -0.5, 0.0], [0.5, 0.5, 0.0], [0.5, 0.0, 0.0], [-0.5, 0.5, 0.0]];
+const VERTICES: &[glow::Vertex2D] =
+    &[[-0.5, -0.5], [0.0, 0.5,], [0.5, -0.5]];
 
 
 
@@ -58,7 +47,7 @@ fn main() -> () {
             3,
             GL_FLOAT,
             GL_FALSE,
-            size_of::<Vertex>().try_into().unwrap(),
+            size_of::<f32>().try_into().unwrap(),
             0 as *const _,
         );
         glEnableVertexAttribArray(0);

@@ -62,12 +62,18 @@ impl Buffer {
     }
 
 
-    pub fn buffer_data(buffer_type: BufferType, data: &[u8], usage: GLenum) {
+    pub fn buffer_data(buffer_type: BufferType, data: &[Vertex2D], usage: GLenum) {
+        let mut coords = Vec::with_capacity(data.len() * 3);
+
+        for vertex in data {
+            coords.extend([vertex[0], vertex[1], 0.0])
+        }
+
         unsafe {
             glBufferData(
                 buffer_type as GLenum,
-                data.len().try_into().unwrap(),
-                data.as_ptr().cast(),
+                coords.len().try_into().unwrap(),
+                coords.as_ptr().cast(),
                 usage,
             );
         }
@@ -282,3 +288,5 @@ pub enum DrawMode{
 pub fn draw_arrays(mode: DrawMode, first: i32, count: isize) -> () {
     unsafe { glDrawArrays(mode as GLenum, first, count as GLsizei) }
 }
+
+pub type Vertex2D = [f32; 2];
