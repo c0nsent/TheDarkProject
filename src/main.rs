@@ -6,10 +6,21 @@ use ogl33::*;
 use std::{fs};
 
 
-const VERTICES: &[glow::Vertex2D] =
-    &[[-0.5, -0.5], [0.0, 0.5,], [0.5, -0.5]];
+const VERTICES: [glow::Vertex2D; 6] =
+    [[-0.5, -0.5], [0.0, 0.5,], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.0], [-0.5, 0.5]];
 
+const fn to3D<const N: usize>(vertices: &[glow::Vertex2D; N]) -> [[f32; 3]; N] {
+    let mut result = [[0.0; 3]; N];
+    let mut i = 0;
 
+    while i < N {
+        let vertex = vertices[i];
+        result[i] = [vertex[0], vertex[1], 0.0];
+        i+=1;
+    }
+
+    result
+}
 
 
 fn main() -> () {
@@ -39,7 +50,10 @@ fn main() -> () {
 
     let vbo = glow::Buffer::new().unwrap();
     vbo.bind(glow::BufferType::Array);
-    glow::Buffer::buffer_data(glow::BufferType::Array, bytemuck::cast_slice(&VERTICES) , GL_STATIC_DRAW);
+
+    const VERTICES_3D: [f32] = to3D(VERTICES);
+
+    glow::Buffer::buffer_data(glow::BufferType::Array, bytemuck::cast_slice(VERTICES_3D), GL_STATIC_DRAW);
 
     unsafe {
         glVertexAttribPointer(
@@ -47,7 +61,7 @@ fn main() -> () {
             3,
             GL_FLOAT,
             GL_FALSE,
-            size_of::<f32>().try_into().unwrap(),
+            size_of::<f32>() as GLsizei,
             0 as *const _,
         );
         glEnableVertexAttribArray(0);
