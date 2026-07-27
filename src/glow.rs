@@ -1,15 +1,22 @@
 use ogl33::*;
 
+pub const TRUE: GLboolean = GL_TRUE;
+pub const FALSE: GLboolean = GL_FALSE;
+
+
+pub type Vertex2D = [f32; 2];
+
+pub type Vertex3D = [f32; 3];
 
 pub fn clear_color(color: Color) {
    unsafe { glClearColor(color.r, color.g, color.b, color.a) }; 
 }
 
 pub struct Color {
-    r: f32, 
-    g: f32,
-    b: f32,
-    a: f32,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
 }
 
 impl Color {
@@ -62,22 +69,32 @@ impl Buffer {
     }
 
 
-    pub fn buffer_data(buffer_type: BufferType, data: &[u8], usage: GLenum) {
-/*        let mut coords = Vec::with_capacity(data.len() * 3);
+    pub fn buffer_data(buffer_type: BufferType, data: &[Vertex3D], usage: GLenum) {
 
-        for vertex in data {
-            coords.extend([vertex[0], vertex[1], 0.0])
-        }
+        let bit_slice: &[u8] = bytemuck::cast_slice(&data);
         
-        let slice: &[u8] = bytemuck::cast_slice(&coords);*/
-
         unsafe {
             glBufferData(
                 buffer_type as GLenum,
-                data.len() as GLsizeiptr,
-                data.as_ptr().cast(),
+                bit_slice.len() as GLsizeiptr,
+                bit_slice.as_ptr().cast(),
                 usage,
             );
+        }
+    }
+
+    pub fn vertex_attrib_pointer() -> () {
+        
+        unsafe {
+            glVertexAttribPointer(
+            0,
+            3,
+            GL_FLOAT,
+            false as GLboolean,
+            size_of::<Vertex3D>() as GLsizei,
+            0 as *const _,
+            );
+            glEnableVertexAttribArray(0);
         }
     }
 }
@@ -107,7 +124,7 @@ impl Shader {
                 self.0,
                 1,
                 &(src.as_bytes().as_ptr().cast()),
-                &(src.len().try_into().unwrap())
+                &(src.len() as GLint)
             )
         }
     }
@@ -122,7 +139,7 @@ impl Shader {
         let mut compiled = 0;
         unsafe { glGetShaderiv(self.0, GL_COMPILE_STATUS, &mut compiled) };
 
-        compiled == GLint::from(GL_TRUE)
+        compiled == TRUE as GLint
     }
 
 
@@ -134,7 +151,7 @@ impl Shader {
         unsafe {
             glGetShaderInfoLog(
                 self.0,
-                v.capacity().try_into().unwrap(),
+                v.capacity() as GLsizei,
                 &mut len_written,
                 v.as_mut_ptr().cast()
             );
@@ -145,7 +162,7 @@ impl Shader {
     }
 
 
-    pub fn delete(self) {
+    pub fn mark_for_deletion(self) {
         unsafe { glDeleteShader(self.0) }
     }
 
@@ -157,11 +174,12 @@ impl Shader {
         id.set_source(source);
         id.compile();
         if id.compile_success() {
-            Ok(id)
+            return Ok(id);
         } else {
-            let out = id.info_log();
-            id.delete();
-            Err(out)
+            let log = id.info_log();
+            id.mark_for_deletion();
+            return Err(log);
+
         }
     }
 }
@@ -193,7 +211,8 @@ impl ShaderProgram {
     pub fn link_success(&self) -> bool {
         let mut success = 0;
         unsafe { glGetProgramiv(self.0, GL_LINK_STATUS, &mut success) };
-        success == GLint::from(GL_TRUE)
+        
+        success == TRUE as GLint
     }
 
 
@@ -225,7 +244,7 @@ impl ShaderProgram {
     }
 
 
-    pub fn from_vert_frag(vert: &str, frag: &str) -> Result<Self, String> {
+    pub fn from_shader_sources(vert: &str, frag: &str) -> Result<Self, String> {
         let p =
             Self::new().ok_or_else(|| "Couldn't allocate a program".to_string())?;
         let v = Shader::from_source(ShaderType::Vertex, vert)
@@ -235,8 +254,8 @@ impl ShaderProgram {
         p.attach_shader(&v);
         p.attach_shader(&f);
         p.link_program();
-        v.delete();
-        f.delete();
+        v.mark_for_deletion();
+        f.mark_for_deletion();
 
         if p.link_success() {
             Ok(p)
@@ -291,4 +310,3 @@ pub fn draw_arrays(mode: DrawMode, first: i32, count: isize) -> () {
     unsafe { glDrawArrays(mode as GLenum, first, count as GLsizei) }
 }
 
-pub type Vertex2D = [f32; 2];

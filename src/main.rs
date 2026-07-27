@@ -3,25 +3,11 @@ pub mod glow;
 
 use beryllium::*;
 use ogl33::*;
-use std::{fs};
+use std::fs;
 
-
-const VERTICES: [glow::Vertex2D; 6] =
-    [[-0.5, -0.5], [0.0, 0.5,], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.0], [-0.5, 0.5]];
-
-const fn to3D<const N: usize>(vertices: &[glow::Vertex2D; N]) -> [[f32; 3]; N] {
-    let mut result = [[0.0; 3]; N];
-    let mut i = 0;
-
-    while i < N {
-        let vertex = vertices[i];
-        result[i] = [vertex[0], vertex[1], 0.0];
-        i+=1;
-    }
-
-    result
-}
-
+const VERTICES: &[glow::Vertex3D] = 
+    &[[-0.5, -0.5, 0.0], [0.0, 0.5, 0.0], [0.5, -0.5, 0.0], 
+        [0.5, 0.5, 0.0], [0.5, 0.0, 0.0], [-0.5, 0.5, 0.0]];
 
 fn main() -> () {
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
@@ -50,32 +36,17 @@ fn main() -> () {
 
     let vbo = glow::Buffer::new().unwrap();
     vbo.bind(glow::BufferType::Array);
-
-    const VERTICES_3D: [f32] = to3D(VERTICES);
-
-    glow::Buffer::buffer_data(glow::BufferType::Array, bytemuck::cast_slice(VERTICES_3D), GL_STATIC_DRAW);
-
-    unsafe {
-        glVertexAttribPointer(
-            0,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            size_of::<f32>() as GLsizei,
-            0 as *const _,
-        );
-        glEnableVertexAttribArray(0);
-    }
-
+    glow::Buffer::buffer_data(glow::BufferType::Array, VERTICES, GL_STATIC_DRAW);
+    glow::Buffer::vertex_attrib_pointer();
 
     let vertex_shader_source= fs::read_to_string("shaders/shader.vert")
         .expect("Failed to read a shader file ");
 
     let fragment_shader_source = fs::read_to_string("shaders/shader.frag")
-        .unwrap();
+        .expect("Failed to read a shader file ");
 
     let shader_program =
-        glow::ShaderProgram::from_vert_frag(&vertex_shader_source, &fragment_shader_source).unwrap();
+        glow::ShaderProgram::from_shader_sources(&vertex_shader_source, &fragment_shader_source).unwrap();
 
     shader_program.use_program();
 
@@ -93,18 +64,12 @@ fn main() -> () {
 
         glow::clear(glow::ClearBufferBit::ColorBuffer as isize);
 
-/*        let raw_input = egui::RawInput::default();
-        let _full_output = egui_ctx.run(raw_input, |ctx| {
-            egui::Window::new("Test").show(ctx, |ui| {
-                ui.label("test");
-            });
-        } );
-        egui::Window::new("Test").show(&egui_ctx, |ui| {
-            ui.label("test");
-        });*/
-
         glow::draw_arrays(glow::DrawMode::Triangles, 0, VERTICES.len().cast_signed());
 
         win.swap_window();
+        /*
+        let mut max_attribs = 0;
+        unsafe { glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &mut max_attribs) }
+        println!("{}", max_attribs);*/
     }
 }
