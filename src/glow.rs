@@ -1,3 +1,7 @@
+#![allow(clippy::zero_ptr)]
+#![allow(clippy::single_match)]
+
+use std::ffi::CString;
 use ogl33::*;
 
 pub const TRUE: GLboolean = GL_TRUE;
@@ -5,7 +9,6 @@ pub const FALSE: GLboolean = GL_FALSE;
 
 
 pub type Vertex2D = [f32; 2];
-
 pub type Vertex3D = [f32; 3];
 
 pub fn clear_color(color: Color) {
@@ -76,7 +79,7 @@ impl Buffer {
             glBufferData(
                 buffer_type as GLenum,
                 bit_slice.len() as GLsizeiptr,
-                bit_slice.as_ptr().cast(),
+                bit_slice.as_ptr() as *const _,
                 usage,
             );
         }
@@ -99,11 +102,21 @@ impl Buffer {
             0,
             3,
             GL_FLOAT,
-            false as GLboolean,
-            size_of::<Vertex3D>() as GLsizei,
+            FALSE,
+            size_of::<[f32; 6]>() as GLsizei,
             0 as *const _,
             );
             glEnableVertexAttribArray(0);
+
+            glVertexAttribPointer(
+                1,
+                3,
+                GL_FLOAT,
+                FALSE,
+                size_of::<[f32; 6]>() as GLsizei,
+                size_of::<[f32; 3]>() as *const _,
+            );
+            glEnableVertexAttribArray(1);
         }
     }
 }
@@ -175,7 +188,6 @@ impl Shader {
         unsafe { glDeleteShader(self.0) }
     }
 
-
     pub fn from_source(shader_type: ShaderType, source: &str) -> Result<Self, String> {
         let id = Self::new(shader_type)
             .ok_or_else(|| "Couldn't allocate new shader".to_string())?;
@@ -183,12 +195,11 @@ impl Shader {
         id.set_source(source);
         id.compile();
         if id.compile_success() {
-            return Ok(id);
+            Ok(id)
         } else {
             let log = id.info_log();
             id.mark_for_deletion();
-            return Err(log);
-
+            Err(log)
         }
     }
 }
@@ -199,13 +210,12 @@ impl ShaderProgram {
 
     pub fn new() -> Option<Self> {
         let program = unsafe { glCreateProgram() };
-        if program != 0 {
+        if program  != 0 {
             Some(Self(program))
         } else {
             None
         }
     }
-
 
     pub fn attach_shader(&self, shader: &Shader) {
         unsafe { glAttachShader(self.0, shader.0) }
@@ -242,16 +252,36 @@ impl ShaderProgram {
         String::from_utf8_lossy(&v).into_owned()
     }
 
-
     pub fn use_program(&self) {
         unsafe { glUseProgram(self.0) }
     }
-
 
     pub fn delete(self) {
         unsafe { glDeleteProgram(self.0) }
     }
 
+    pub fn get_uniform(&self, name: &str) -> Result<i32, String> {
+
+        let c_string = CString::new(name).expect("Failed to create CString");
+
+        let uniform_location
+            = unsafe{ glGetUniformLocation(self.0, c_string.as_ptr() as *const c_char) };
+
+        if uniform_location == -1 {
+            Err(format!("No uniform with a such name: {}", name))
+        }
+        else {
+            Ok(uniform_location)
+        }
+    }
+
+    pub fn set_float(&self, name: &str, value: f32) -> Result<(), String> {
+        let uniform_id = self.get_uniform(name)?;
+
+        unsafe {
+            Ok(glUniform1f( uniform_id, value ))
+        }
+    }
 
     pub fn from_shader_sources(vert: &str, frag: &str) -> Result<Self, String> {
         let p =
