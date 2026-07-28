@@ -52,22 +52,21 @@ pub enum BufferType {
     ElementArray = GL_ELEMENT_ARRAY_BUFFER as isize,
 }
 
-pub struct Buffer(pub GLuint);
+pub struct Buffer{
+    pub id: GLuint,
+    pub buffer_type: BufferType
+}
 impl Buffer {
-    pub fn new() -> Option<Self> {
+    pub fn new(buffer_type: BufferType) -> Option<Self> {
         let mut vbo = 0;
         unsafe { glGenBuffers(1, &mut vbo); }
-        if vbo != 0 {
-            Some(Self(vbo))
-        } else {
-            None
-        }
-    }
 
-    pub fn bind(&self, buffer_type: BufferType) {
-        unsafe { glBindBuffer(buffer_type as GLenum, self.0) }
-    }
+        if vbo == 0 { return None }
 
+        unsafe { glBindBuffer(buffer_type as GLenum, vbo); }
+
+        Some(Self{ id: vbo, buffer_type})
+    }
 
     pub fn buffer_data(buffer_type: BufferType, data: &[Vertex3D], usage: GLenum) {
 
@@ -81,6 +80,16 @@ impl Buffer {
                 usage,
             );
         }
+    }
+
+    pub fn from_vertex_data(data: &[Vertex3D]) -> Result<Buffer, String> {
+        let vbo = Self::new(BufferType::Array)
+            .ok_or_else( ||"Failed to create GL_ARRAY_BUFFER".to_string())?;
+
+        Self::buffer_data(vbo.buffer_type, data, GL_STATIC_DRAW);
+        Self::vertex_attrib_pointer();
+        
+        Ok(vbo)
     }
 
     pub fn vertex_attrib_pointer() -> () {

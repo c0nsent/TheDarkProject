@@ -34,10 +34,7 @@ fn main() -> () {
     let vao = glow::VertexArray::new().unwrap();
     vao.bind();
 
-    let vbo = glow::Buffer::new().unwrap();
-    vbo.bind(glow::BufferType::Array);
-    glow::Buffer::buffer_data(glow::BufferType::Array, VERTICES, GL_STATIC_DRAW);
-    glow::Buffer::vertex_attrib_pointer();
+    let vbo = glow::Buffer::from_vertex_data(VERTICES).expect("");
 
     let vertex_shader_source= fs::read_to_string("shaders/shader.vert")
         .expect("Failed to read a shader file ");
