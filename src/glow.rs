@@ -348,4 +348,3 @@ pub enum DrawMode{
 pub fn draw_arrays(mode: DrawMode, first: i32, count: isize) -> () {
     unsafe { glDrawArrays(mode as GLenum, first, count as GLsizei) }
 }
-

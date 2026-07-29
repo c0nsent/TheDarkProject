@@ -24,12 +24,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "adler2"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
-
-[[package]]
 name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -282,16 +276,11 @@ dependencies = [
 
 [[package]]
 name = "imagine"
-version = "0.5.3"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "068c2da78be678421d558cde4bef82977be5c18af709656d92974fcd6bcec363"
+checksum = "b66f20ef575a7087eed611a0d4ff4bd624d24bf9c63b4d614d2d8823090af75b"
 dependencies = [
- "bitfrob",
  "bytemuck",
- "miniz_oxide",
- "pack1",
- "pixel_formats",
- "png_filters",
 ]
 
 [[package]]
@@ -352,15 +341,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "miniz_oxide"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316"
-dependencies = [
- "adler2",
-]
-
-[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -398,15 +378,6 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-
-[[package]]
-name = "pack1"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3b7bb0ecf2e447b1f20ee94ee79ef6eed1e9d4b3c36ce1903b9dea3bf205523"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "parking_lot"
@@ -454,12 +425,6 @@ dependencies = [
  "bytemuck",
  "fast-srgb8",
 ]
-
-[[package]]
-name = "png_filters"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdad86b89bada24e69d5fdc7626519a32a23f08f48a4ca229db06a1624c5ddd0"
 
 [[package]]
 name = "polycool"
