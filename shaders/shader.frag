@@ -1,16 +1,13 @@
 #version 330 core
 
-uniform vec4 uni_color;
-
 in vec3 color;
-in vec3 pos;
-
+in vec2 texCoords;
 
 out vec4 final_color;
 
-
+uniform sampler2D ourTexture;
 
 void main()
 {
-    final_color = vec4(pos, 1.0);
+    final_color = texture(ourTexture, texCoords);
 }

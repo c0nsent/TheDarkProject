@@ -9,7 +9,7 @@ pub const FALSE: GLboolean = GL_FALSE;
 
 
 pub type Vertex2D = [f32; 2];
-pub type Vertex3D = [f32; 3];
+pub type Vertex = [f32; 3 + 3 + 2];
 
 pub fn clear_color(color: Color) {
    unsafe { glClearColor(color.r, color.g, color.b, color.a) }; 
@@ -71,7 +71,7 @@ impl Buffer {
         Some(Self{ id: vbo, buffer_type})
     }
 
-    pub fn buffer_data(buffer_type: BufferType, data: &[Vertex3D], usage: GLenum) {
+    pub fn buffer_data(buffer_type: BufferType, data: &[Vertex], usage: GLenum) {
 
         let bit_slice: &[u8] = bytemuck::cast_slice(&data);
         
@@ -85,7 +85,7 @@ impl Buffer {
         }
     }
 
-    pub fn from_vertex_data(data: &[Vertex3D]) -> Result<Buffer, String> {
+    pub fn from_vertex_data(data: &[Vertex]) -> Result<Buffer, String> {
         let vbo = Self::new(BufferType::Array)
             .ok_or_else( ||"Failed to create GL_ARRAY_BUFFER".to_string())?;
 
@@ -103,7 +103,7 @@ impl Buffer {
             3,
             GL_FLOAT,
             FALSE,
-            size_of::<[f32; 6]>() as GLsizei,
+            size_of::<Vertex>() as GLsizei,
             0 as *const _,
             );
             glEnableVertexAttribArray(0);
@@ -113,10 +113,20 @@ impl Buffer {
                 3,
                 GL_FLOAT,
                 FALSE,
-                size_of::<[f32; 6]>() as GLsizei,
+                size_of::<Vertex>() as GLsizei,
                 size_of::<[f32; 3]>() as *const _,
             );
             glEnableVertexAttribArray(1);
+            
+            glVertexAttribPointer(
+                0,
+                3,
+                GL_FLOAT,
+                FALSE,
+                size_of::<Vertex>() as GLsizei,
+                size_of::<[f32; 6]>() as *const _,
+            );
+            glEnableVertexAttribArray(2);
         }
     }
 }
@@ -139,7 +149,6 @@ impl Shader {
         }
     }
 
-
     pub fn set_source(&self, src: &str) {
         unsafe {
             glShaderSource(
@@ -151,11 +160,9 @@ impl Shader {
         }
     }
 
-
     pub fn compile(&self) {
         unsafe { glCompileShader(self.0) }
     }
-
 
     pub fn compile_success(&self) -> bool {
         let mut compiled = 0;
@@ -163,7 +170,6 @@ impl Shader {
 
         compiled == TRUE as GLint
     }
-
 
     pub fn info_log(&self) -> String {
         let mut needed_len = 0;
