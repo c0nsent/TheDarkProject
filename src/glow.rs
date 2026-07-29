@@ -90,7 +90,7 @@ impl Buffer {
             .ok_or_else( ||"Failed to create GL_ARRAY_BUFFER".to_string())?;
 
         Self::buffer_data(vbo.buffer_type, data, GL_STATIC_DRAW);
-        Self::vertex_attrib_pointer();
+        //Self::vertex_attrib_pointer();
         
         Ok(vbo)
     }
@@ -119,8 +119,8 @@ impl Buffer {
             glEnableVertexAttribArray(1);
             
             glVertexAttribPointer(
-                0,
-                3,
+                2,
+                2,
                 GL_FLOAT,
                 FALSE,
                 size_of::<Vertex>() as GLsizei,

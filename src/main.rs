@@ -11,7 +11,7 @@ use std::ptr::null;
 use beryllium::video::{GlContextFlags, GlSwapInterval};
 use crate::glow::BufferType;
 
-const VERTICES: &[glow::Vertex] = &[
+const VERTICES: [glow::Vertex; 4] = [
     [0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0],
     [0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0],
     [-0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
@@ -27,15 +27,13 @@ const INDICES: [TriIndices; 2] = [[0, 1, 3], [1, 2, 3]];
 fn main() -> () {
 
     let bitmap = {
-        let mut file = fs::File::open("textures/obama.png"). unwrap();
+        let mut file = fs::File::open("textures/obama.png").unwrap();
         let mut bytes = vec![];
         std::io::Read::read_to_end(&mut file, &mut bytes).unwrap();
         let mut bitmap = imagine::png::parse_png_rgba8(&bytes).unwrap().bitmap;
         bitmap.flip_scanlines();
         bitmap
     };
-
-
 
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
 
@@ -55,12 +53,9 @@ fn main() -> () {
             title: "The Dark Project",
             width: 800,
             height: 600,
-            allow_high_dpi: true,
-            borderless: false,
-            resizable: false,
+            ..Default::default()
         })
         .expect("Failed to create a window: ");
-
     win.set_swap_interval(GlSwapInterval::Vsync).unwrap();
 
     unsafe {
@@ -70,13 +65,11 @@ fn main() -> () {
     let vao = glow::VertexArray::new().unwrap();
     vao.bind();
 
-    let _vbo = glow::Buffer::from_vertex_data(VERTICES).expect("");
+    let _vbo = glow::Buffer::from_vertex_data(&VERTICES).expect("");
 
-    let ebo = glow::Buffer::new(BufferType::ElementArray).unwrap();
-
+    let _ebo = glow::Buffer::new(BufferType::ElementArray).unwrap();
+    let slice: &[u8] = bytemuck::cast_slice(&INDICES);
     unsafe {
-        let slice: &[u8] = bytemuck::cast_slice(&INDICES);
-
         glBufferData(
             GL_ELEMENT_ARRAY_BUFFER,
             slice.len() as GLsizeiptr,
@@ -94,17 +87,17 @@ fn main() -> () {
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
 
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
-            GL_RGB as GLint,
+            GL_RGBA as GLint,
             bitmap.width() as GLsizei,
             bitmap.height() as GLsizei,
             0,
-            GL_RGB,
+            GL_RGBA,
             GL_UNSIGNED_BYTE,
             bitmap.pixels().as_ptr().cast()
         );
@@ -131,6 +124,8 @@ fn main() -> () {
             .unwrap();
 
     shader_program.use_program();
+
+    glow::Buffer::vertex_attrib_pointer();
 
 
     'main_loop: loop {
