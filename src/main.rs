@@ -77,10 +77,10 @@ fn main() -> () {
 
 
         if is_negative {
-            offset += time;
+            offset += 0.001;
         }
         else {
-            offset -= time;
+            offset -= 0.001;
         }
 
 
