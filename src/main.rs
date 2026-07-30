@@ -1,4 +1,3 @@
-//#![cfg_attr(not(debug_assertions), windows_subsystem = "linux")]
 #![allow(clippy::single_match)]
 #![allow(clippy::zero_ptr)]
 
@@ -25,7 +24,7 @@ const INDICES: [TriIndices; 2] = [[0, 1, 3], [1, 2, 3]];
 
 
 fn load_image(path: &str) -> Result<BitmapRGBA8, &str> {
-    let mut file = fs::File::open("textures/obama.png").unwrap();
+    let mut file = fs::File::open(path).unwrap();
     let mut bytes = vec![];
     std::io::Read::read_to_end(&mut file, &mut bytes).unwrap();
     let mut bitmap = imagine::png::parse_png_rgba8(&bytes).unwrap().bitmap;
@@ -33,22 +32,25 @@ fn load_image(path: &str) -> Result<BitmapRGBA8, &str> {
     Ok(bitmap)
 }
 
-fn init_texture(image: BitmapRGBA8) -> () {
+fn init_texture(index: GLenum, image: BitmapRGBA8, is_png: bool) -> GLuint {
 
-    let mut textures = 0;
+    let mut texture = 0;
     unsafe {
-        glGenTextures(1, &mut textures);
-        glBindTexture(GL_TEXTURE_2D, textures);
+        glGenTextures(1, &mut texture);
+        glActiveTexture(index);
+        glBindTexture(GL_TEXTURE_2D, texture);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
 
+        let format =  { if is_png {GL_RGBA } else {GL_RGB} };
+
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
-            GL_RGBA as GLint,
+            GL_RGB as GLint,
             image.width() as GLsizei,
             image.height() as GLsizei,
             0,
@@ -59,12 +61,14 @@ fn init_texture(image: BitmapRGBA8) -> () {
 
         glGenerateMipmap(GL_TEXTURE_2D);
     }
+
+    texture
 }
 
 fn main() -> () {
 
     let obama = load_image("textures/obama.png").unwrap();
-    let talking_heads = load_image("textures/fears_of_music.jpg").unwrap();
+    let garris = load_image("textures/logo.png").unwrap();
 
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
 
@@ -109,44 +113,10 @@ fn main() -> () {
         );
     }
 
-    //const BORDER_COLOR: [f32; 4] = [ 1.0, 1.0, 0.0, 1.0 ];
+    let texture0 = init_texture(GL_TEXTURE0, garris, true);
+    let texture1 = init_texture(GL_TEXTURE1, obama, true);
 
-    let mut textures = 0;
-    unsafe {
-        glGenTextures(1, &mut textures);
-        glBindTexture(GL_TEXTURE_2D, textures);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
-
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA as GLint,
-            obama.width() as GLsizei,
-            obama.height() as GLsizei,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            obama.pixels().as_ptr().cast()
-        );
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-/*        glTexParameterfv(
-            GL_TEXTURE_2D,
-            GL_TEXTURE_BORDER_COLOR,
-            BORDER_COLOR.as_ptr() as *const GLfloat
-        );
-*/
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textures);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, talking_heads);
-    }
 
     let vertex_shader_source= fs::read_to_string("shaders/shader.vert")
         .expect("Failed to read a shader file ");
@@ -160,9 +130,10 @@ fn main() -> () {
             .unwrap();
 
     shader_program.use_program();
+    shader_program.set_int("texture0", 0).unwrap();
+    shader_program.set_int("texture1", 1).unwrap();
 
     glow::Buffer::vertex_attrib_pointer();
-
 
     'main_loop: loop {
         while let Some(event) = sdl.poll_events() {
@@ -176,15 +147,9 @@ fn main() -> () {
 
         glow::clear(glow::ClearBufferBit::ColorBuffer as isize);
 
-        //glow::draw_arrays(glow::DrawMode::Triangles, 0, VERTICES.len().cast_signed());
-
         unsafe {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null());
         }
         win.swap_window();
-        /*
-        let mut max_attribs = 0;
-        unsafe { glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &mut max_attribs) }
-        println!("{}", max_attribs);*/
     }
 }

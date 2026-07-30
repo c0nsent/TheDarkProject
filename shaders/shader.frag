@@ -1,16 +1,16 @@
 #version 330 core
 
-in vec4 color;
-in vec2 TexCoords;
+in vec4 frag_color;
+in vec2 frag_tex;
 
 out vec4 final_color;
 
-uniform sampler2D obamaTex;
-uniform sampler2D lifeDuringWartime;
+uniform sampler2D texture0;
+uniform sampler2D texture1;
 
 
 void main()
 {
-    final_color =  mix(texture(obamaTex, TexCoords),
-                       texture(lifeDuringWartime, TexCoords));
+    final_color =  mix(texture(texture0, frag_tex),
+                       texture(texture1, frag_tex), 0.5);
 }

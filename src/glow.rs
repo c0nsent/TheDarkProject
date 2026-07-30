@@ -289,6 +289,14 @@ impl ShaderProgram {
         }
     }
 
+    pub fn set_int(&self, name: &str, value: i32) -> Result<(), String> {
+        let uniform_id = self.get_uniform(name)?;
+        
+        unsafe {
+            Ok(glUniform1i(uniform_id, value))
+        }
+    }
+    
     pub fn from_shader_sources(vert: &str, frag: &str) -> Result<Self, String> {
         let p =
             Self::new().ok_or_else(|| "Couldn't allocate a program".to_string())?;
