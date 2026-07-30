@@ -9,6 +9,7 @@ use ogl33::*;
 use std::fs;
 use std::ptr::null;
 use beryllium::video::{GlContextFlags, GlSwapInterval};
+use imagine::BitmapRGBA8;
 use crate::glow::BufferType;
 
 const VERTICES: [glow::Vertex; 4] = [
@@ -23,17 +24,47 @@ type TriIndices = [u32; 3];
 const INDICES: [TriIndices; 2] = [[0, 1, 3], [1, 2, 3]];
 
 
+fn load_image(path: &str) -> Result<BitmapRGBA8, &str> {
+    let mut file = fs::File::open("textures/obama.png").unwrap();
+    let mut bytes = vec![];
+    std::io::Read::read_to_end(&mut file, &mut bytes).unwrap();
+    let mut bitmap = imagine::png::parse_png_rgba8(&bytes).unwrap().bitmap;
+    bitmap.flip_scanlines();
+    Ok(bitmap)
+}
+
+fn init_texture(image: BitmapRGBA8) -> () {
+
+    let mut textures = 0;
+    unsafe {
+        glGenTextures(1, &mut textures);
+        glBindTexture(GL_TEXTURE_2D, textures);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
+
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA as GLint,
+            image.width() as GLsizei,
+            image.height() as GLsizei,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            image.pixels().as_ptr().cast()
+        );
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+}
 
 fn main() -> () {
 
-    let bitmap = {
-        let mut file = fs::File::open("textures/obama.png").unwrap();
-        let mut bytes = vec![];
-        std::io::Read::read_to_end(&mut file, &mut bytes).unwrap();
-        let mut bitmap = imagine::png::parse_png_rgba8(&bytes).unwrap().bitmap;
-        bitmap.flip_scanlines();
-        bitmap
-    };
+    let obama = load_image("textures/obama.png").unwrap();
+    let talking_heads = load_image("textures/fears_of_music.jpg").unwrap();
 
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
 
@@ -94,12 +125,12 @@ fn main() -> () {
             GL_TEXTURE_2D,
             0,
             GL_RGBA as GLint,
-            bitmap.width() as GLsizei,
-            bitmap.height() as GLsizei,
+            obama.width() as GLsizei,
+            obama.height() as GLsizei,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            bitmap.pixels().as_ptr().cast()
+            obama.pixels().as_ptr().cast()
         );
 
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -110,6 +141,11 @@ fn main() -> () {
             BORDER_COLOR.as_ptr() as *const GLfloat
         );
 */
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textures);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, talking_heads);
     }
 
     let vertex_shader_source= fs::read_to_string("shaders/shader.vert")

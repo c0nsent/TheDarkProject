@@ -4,6 +4,8 @@ description = "Learning Rust and graphics programming"
 version = "0.2.0"
 edition = "2024"
 
+publish=false
+
 [dependencies]
 bytemuck = "1"
 ogl33 = { version = "0.2", features = ["debug_error_checks"]}
