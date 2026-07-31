@@ -1,18 +1,21 @@
 [package]
+authors = ["Amitayus_ c0nsent@proton.me"]
 name = "TheDarkProject"
 description = "Learning Rust and graphics programming"
+repository = "https://github.com/c0nsent/TheDarkProject"
 version = "0.2.0"
 edition = "2024"
 
 publish=false
 
 [dependencies]
-bytemuck = "1"
-ogl33 = { version = "0.2", features = ["debug_error_checks"]}
+bytemuck = "1.25.2"
+ogl33 = "0.2.0"
 ultraviolet = "0.10.0"
 egui = "0.35.0"
 
 beryllium = "0.13.3"
 imagine = "0.0.5"
+image = "0.25.10"
 
 [dev-dependencies]
