@@ -7,6 +7,8 @@ version = "0.2.0"
 edition = "2024"
 
 publish=false
+license = "LGPL-2"
+license-file = "LICENSE.MD"
 
 [dependencies]
 bytemuck = "1.25.2"
