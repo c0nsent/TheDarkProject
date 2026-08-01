@@ -18,6 +18,5 @@ egui = "0.35.0"
 
 beryllium = "0.13.3"
 imagine = "0.0.5"
-image = "0.25.10"
 
 [dev-dependencies]

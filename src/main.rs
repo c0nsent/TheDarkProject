@@ -5,18 +5,17 @@ pub mod glow;
 
 use beryllium::*;
 use ogl33::*;
-use std::{fs, path::Path};
+use std::fs;
 use std::ptr::null;
 use beryllium::video::{GlContextFlags, GlSwapInterval};
-use image::DynamicImage;
 use imagine::BitmapRGBA8;
 use crate::glow::BufferType;
 
 const VERTICES: [glow::Vertex; 4] = [
-    [0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0],
-    [0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0],
+    [0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 2.0, 2.0],
+    [0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0],
     [-0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-    [-0.5, 0.5, 0.0, 0.2, 0.3, 0.4, 0.0, 1.0]
+    [-0.5, 0.5, 0.0, 0.2, 0.3, 0.4, 0.0, 2.0]
 ];
 
 
@@ -33,40 +32,6 @@ fn load_image(path: &str) -> Result<BitmapRGBA8, &str> {
     Ok(bitmap)
 }
 
-/*
-fn fromImage(index: GLenum, image: DynamicImage) -> GLuint {
-
-    let mut texture = 0;
-    unsafe {
-        glGenTextures(1, &mut texture);
-        glActiveTexture(index);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
-
-        let data = image.pixels();
-
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGB as GLint,
-            image.width() as GLsizei,
-            image.height() as GLsizei,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-
-        );
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    texture
-}
-*/
 fn init_texture(index: GLenum, image: BitmapRGBA8) -> GLuint {
 
     let mut texture = 0;
@@ -101,8 +66,6 @@ fn init_texture(index: GLenum, image: BitmapRGBA8) -> GLuint {
 fn main() -> () {
 
     let obama = load_image("textures/obama.png").unwrap();
-    //let obama = image::open(&Path::new("textures/obama.png"))
-        //.expect("Failed to load texture");
     let garris = load_image("textures/logo.png").unwrap();
 
     let sdl = Sdl::init(init::InitFlags::EVERYTHING);
@@ -148,9 +111,8 @@ fn main() -> () {
         );
     }
 
-    let texture0 = init_texture(GL_TEXTURE0, garris);
-    //let texture0 = image::open(&Pa)
-    let texture1 = init_texture(GL_TEXTURE1, obama);
+    let _texture0 = init_texture(GL_TEXTURE0, garris);
+    let _texture1 = init_texture(GL_TEXTURE1, obama);
 
 
 
